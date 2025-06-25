@@ -1,10 +1,68 @@
+let factor;
+
 let currentMode = null;
-let balls = [];
-let letters = "WORKPLAY".split(""); // One for each of 8 balls
-let paddle;
-let startGame = false;
+let mode1Started = false;
 let pintu;
 
+let tt_canvasWidth = 800;
+let tt_canvasHeight = 600;
+
+// let tt_gridSpacing;
+// let tt_gridDotRadiusBase;
+// let tt_gridDotRadiusVariation;
+
+let tt_gridSpacing = 35;
+let tt_gridDotRadiusBase = 35;
+let tt_gridDotRadiusVariation = 10;
+
+let tt_circleRadius = 18;
+let tt_wordToSpawn = "PINGPONG";
+
+let tt_bounceSpeed = 0.007;
+let tt_bounceAmplitude = 6.5;
+
+let tt_shadowYOffset = 26;
+let tt_shadowHeight = 5;
+let tt_shadowAlpha = 40;
+let tt_shadowWidthMin = tt_circleRadius * 0.75;
+let tt_shadowWidthMax = tt_circleRadius * 1;
+
+let tt_revealDuration = 1000;
+let tt_explosionMinPetals = 6;
+let tt_explosionMaxPetals = 9;
+let tt_explosionSpeedMin = 14;
+let tt_explosionSpeedMax = 20;
+let tt_explosionCollisionRadius = 40;
+
+let tt_hoverCooldown = 300;
+
+let tt_gridDotColor = [255, 204, 0];
+let tt_hiddenDotColor = [0, 0, 0, 0];
+let tt_circleFillColor = [255];
+let tt_textColor = [0];
+
+let tt_bgImagePath = "bg.png";
+
+let tt_circles = [];
+let tt_petals = [];
+let tt_grid = [];
+let tt_explodedCount = 0;
+let tt_spawnAfter = 0;
+let tt_startTime;
+let tt_bgImage;
+let tt_lastInteractionTime = 0;
+let tt_autoTriggerDelay = 8000;
+
+let tt_spacing = 100;
+let tt_squareSize = 10;
+let tt_probability = 0.25;
+
+let tt_centerRectW = 150;
+let tt_centerRectH = 100;
+
+let tt_squarePositions = []; // store final positions to draw
+
+// Mode 2 variables
 let cols, rows; // New grid dimensions based on canvas size
 let numCircles = 8;
 let circleRadius;
@@ -13,8 +71,10 @@ let cellSize;
 let directions = [[0, 1], [1, 0], [0, -1], [-1, 0]];
 let easingDuration = 500;
 let maxPintu = 500;
-let pintuStarted = false;
+let mode2Started = false;
+let duplicate = false;
 
+let mode3Started = false;
 let followers = [];
 let dragging = false;
 let lastMouse = {x:0, y:0};
@@ -26,9 +86,6 @@ let rightPupilAngle = 90;
 let leftPupilTarget = 90;
 let rightPupilTarget = 90;
 
-let started = false;
-let orientation = false;
-let permissionButton;
 let rX;
 let rY;
 let targetX, targetY;
@@ -41,6 +98,9 @@ let customColors = ['#FF414A', '#FFAA02', '#FADB06', '#43BA68', '#3DBEFF', '#8F7
 
 let img;
 
+// Mode 4 variables
+let mode4Started = false;
+
 
 function preload() {
   pintu = loadImage("favicon.png");
@@ -51,6 +111,8 @@ function setup() {
   canvas = createCanvas(windowWidth, windowHeight);
   canvas.touchStarted(touchStarted); // explicitly bind
 
+  
+
   document.getElementById('default').addEventListener('click', () => setMode('function1'));
   document.getElementById('secondd').addEventListener('click', () => setMode('function2'));
   document.getElementById('third').addEventListener('click', () => setMode('function3'));
@@ -58,6 +120,9 @@ function setup() {
 }
 
 function draw() {
+  
+  if (width > height) factor = height;
+  else factor = width;
   
   
   if(!currentMode) {
@@ -105,221 +170,177 @@ function setMode(modeName) {
 function enterFunction1() {
   console.log("Function 1 triggered!");
   // moveX = 0;
-  startGame = false;
+  mode1Started = true;
+  mode2Started = false;
+  mode3Started = false;
+  mode4Started = false;
+
+  angleMode(RADIANS);
+
+  tt_circles = [];
+
+  // tt_gridDotRadiusBase = factor / 30;
+  // tt_gridDotRadiusVariation = 10;
+  // tt_gridSpacing = tt_gridDotRadiusBase * 1.1;
+  // console.log(tt_gridDotRadiusBase, tt_gridSpacing);
+  
 
   document.getElementById('default').style.backgroundColor = '#343232';
   document.getElementById('secondd').style.backgroundColor = 'transparent';
   document.getElementById('third').style.backgroundColor = 'transparent';
   document.getElementById('fourth').style.backgroundColor = 'transparent';
   
-  // Initialize multiple balls
-  balls = [];
-  for (let i = 0; i < 8; i++) {
-    if (i === 0) {
-      balls.push({
+  noStroke();
+  tt_startTime = millis();
+  tt_lastInteractionTime = millis();
 
-        x: 103,
-        y: 148,
-
-        radius: 15,
-        targetRadius: 15,
-        xSpeed: random([-5, 5]),
-        ySpeed: random(-3, -1),
-        letter: letters[i],
-        bgColor: i < 4 ? '#000000' : '#FFFFFF',
-        textColor: i < 4 ? '#FFFFFF' : '#000000'
-
-      });
-    } else if (i === 1) {
-      balls.push({
-
-        x: (width / 2) - 4*40 + i*40,
-        y: i % 2 === 0 ? (height / 2) - 15 : (height / 2) + 15,
-
-        radius: 15,
-        targetRadius: 15,
-        xSpeed: random([-5, 5]),
-        ySpeed: random(-3, -1),
-        letter: letters[i],
-        bgColor: i < 4 ? '#000000' : '#FFFFFF',
-        textColor: i < 4 ? '#FFFFFF' : '#000000'
-
-      });
-    } else if (i === 2) {
-      balls.push({
-
-        x: (width / 2) - 4*40 + i*40,
-        y: i % 2 === 0 ? (height / 2) - 15 : (height / 2) + 15,
-
-        radius: 15,
-        targetRadius: 15,
-        xSpeed: random([-5, 5]),
-        ySpeed: random(-3, -1),
-        letter: letters[i],
-        bgColor: i < 4 ? '#000000' : '#FFFFFF',
-        textColor: i < 4 ? '#FFFFFF' : '#000000'
-
-      });
-    } else if (i === 3) {
-      balls.push({
-
-        x: (width / 2) - 4*40 + i*40,
-        y: i % 2 === 0 ? (height / 2) - 15 : (height / 2) + 15,
-
-        radius: 15,
-        targetRadius: 15,
-        xSpeed: random([-5, 5]),
-        ySpeed: random(-3, -1),
-        letter: letters[i],
-        bgColor: i < 4 ? '#000000' : '#FFFFFF',
-        textColor: i < 4 ? '#FFFFFF' : '#000000'
-
-      });
-    } else if (i === 4) {
-      balls.push({
-
-        x: (width / 2) - 4*40 + i*40,
-        y: i % 2 === 0 ? (height / 2) - 15 : (height / 2) + 15,
-
-        radius: 15,
-        targetRadius: 15,
-        xSpeed: random([-5, 5]),
-        ySpeed: random(-3, -1),
-        letter: letters[i],
-        bgColor: i < 4 ? '#000000' : '#FFFFFF',
-        textColor: i < 4 ? '#FFFFFF' : '#000000'
-
-      });
-    } else if (i === 5) {
-      balls.push({
-
-        x: (width / 2) - 4*40 + i*40,
-        y: i % 2 === 0 ? (height / 2) - 15 : (height / 2) + 15,
-
-        radius: 15,
-        targetRadius: 15,
-        xSpeed: random([-5, 5]),
-        ySpeed: random(-3, -1),
-        letter: letters[i],
-        bgColor: i < 4 ? '#000000' : '#FFFFFF',
-        textColor: i < 4 ? '#FFFFFF' : '#000000'
-
-      });
-    } else if (i === 6) {
-      balls.push({
-
-        x: (width / 2) - 4*40 + i*40,
-        y: i % 2 === 0 ? (height / 2) - 15 : (height / 2) + 15,
-
-        radius: 15,
-        targetRadius: 15,
-        xSpeed: random([-5, 5]),
-        ySpeed: random(-3, -1),
-        letter: letters[i],
-        bgColor: i < 4 ? '#000000' : '#FFFFFF',
-        textColor: i < 4 ? '#FFFFFF' : '#000000'
-
-      });
-    } else if (i === 7) {
-      balls.push({
-
-        x: (width / 2) - 4*40 + i*40,
-        y: i % 2 === 0 ? (height / 2) - 15 : (height / 2) + 15,
-
-        radius: 15,
-        targetRadius: 15,
-        xSpeed: random([-5, 5]),
-        ySpeed: random(-3, -1),
-        letter: letters[i],
-        bgColor: i < 4 ? '#000000' : '#FFFFFF',
-        textColor: i < 4 ? '#FFFFFF' : '#000000'
-
+  for (let y = tt_gridSpacing / 2; y < height; y += tt_gridSpacing) {
+    for (let x = tt_gridSpacing / 2; x < width; x += tt_gridSpacing) {
+      tt_grid.push({
+        x, y,
+        r: tt_gridDotRadiusBase + random(-tt_gridDotRadiusVariation, tt_gridDotRadiusVariation),
+        active: true,
+        activatedAt: null,
+        explosionOrigins: []
       });
     }
-
-    
   }
 
-  paddle = {
-    width: 120,
-    height: 20,
-    x: width / 2 - 60,
-    y: height - 60,
-    speed: 10
-  };
+  for (let i = 0; i < tt_wordToSpawn.length; i++) {
+    tt_addNewCircle(tt_wordToSpawn[i]);
+  }
+
+  let tt_halfW = width / 2;
+  let tt_halfH = height / 2;
+
+  // Center rectangle boundaries
+  let tt_rectX1 = width / 2 - tt_centerRectW / 2;
+  let tt_rectY1 = height / 2 - tt_centerRectH / 2;
+  let tt_rectX2 = width / 2 + tt_centerRectW / 2;
+  let tt_rectY2 = height / 2 + tt_centerRectH / 2;
+
+  // Loop through each quadrant and store valid square positions
+  for (let tt_qx = 0; tt_qx < 2; tt_qx++) {
+    for (let tt_qy = 0; tt_qy < 2; tt_qy++) {
+      let tt_xStart = tt_qx * tt_halfW;
+      let tt_yStart = tt_qy * tt_halfH;
+
+      for (let tt_y = tt_yStart + tt_spacing / 2; tt_y < tt_yStart + tt_halfH; tt_y += tt_spacing) {
+        for (let tt_x = tt_xStart + tt_spacing / 2; tt_x < tt_xStart + tt_halfW; tt_x += tt_spacing) {
+          if (
+            random() < tt_probability
+          ) {
+            tt_squarePositions.push({ x: tt_x, y: tt_y });
+          }
+        }
+      }
+    }
+  }
 }
 
 function loopFunction1() {
-  background('#FFD60D');
-  noStroke();
-  
-  paddle.x = mouseX;
-  paddle.x = constrain(paddle.x, 0, width - paddle.width);
-  fill('white');
-  rect(paddle.x, paddle.y, paddle.width, paddle.height);
 
-  for (let i = balls.length - 1; i >= 0; i--) {
-    let ball = balls[i];
-    
-    if (startGame) {
-    ball.x += ball.xSpeed;
-    ball.y += ball.ySpeed;
-    }
-    
+  if (mode1Started) {
+    background('#fffff3');
 
-    // Bounce off paddle
-    if (
-      ball.y + ball.radius > paddle.y &&
-      ball.x > paddle.x &&
-      ball.x < paddle.x + paddle.width
-    ) {
-      ball.ySpeed *= -1;
-      ball.y = paddle.y - ball.radius;
-      
-      // Increase target radius
-      ball.targetRadius = ball.radius + 25; // or however much you want to grow
-      ball.targetRadius = min(ball.targetRadius, 100); // don't grow forever
-    }
-    
-    // Bounce off walls
-    if (ball.x < ball.targetRadius || ball.x > width - ball.targetRadius) {
-      ball.xSpeed *= -1;
-    }
-    if (ball.y < ball.targetRadius) {
-      ball.ySpeed *= -1;
+    // Draw the stored squares
+    noStroke();
+    fill(0);
+    rectMode(CENTER);
+    for (let tt_pos of tt_squarePositions) {
+      rect(tt_pos.x, tt_pos.y, tt_squareSize, tt_squareSize);
     }
 
-    // Ball falls off bottom
-    if (ball.y - ball.radius > height-60) {
-      balls.splice(i, 1); // Remove the ball
-      continue;
+    // Draw center rectangle
+    // push();
+    // fill('white');
+    // noStroke(0);
+    // strokeWeight(2);
+    // rectMode(CENTER);
+    // rect(width / 2, height / 2, tt_centerRectW, tt_centerRectH);
+    // pop();
+    if (width > 700) {
+      push();
+      textAlign(CENTER);
+      textSize(200);
+      textFont('argent-pixel-cf');
+      textStyle(ITALIC);
+      textLeading(130);
+      text('finders\n  seekers', width/2, height/2);
+      pop();
+    } else {
+      push();
+      textAlign(LEFT, TOP);
+      textSize(125);
+      textFont('argent-pixel-cf');
+      text('f', 63 / 393 * width, 39 / 857 * height);
+      text('i', 142 / 393 * width, 39 / 857 * height);
+      text('n', 197 / 393 * width, 58 / 857 * height);
+      text('d', 235 / 393 * width, 165 / 857 * height);
+      text('e', 207 / 393 * width, 253 / 857 * height);
+      text('r', 130 / 393 * width, 272 / 857 * height);
+      text('s', 63 / 393 * width, 339 / 857 * height);
+      text('e', 82 / 393 * width, 434 / 857 * height);
+      text('e', 162 / 393 * width, 482 / 857 * height);
+      text('k', 249 / 393 * width, 520 / 857 * height);
+      text('e', 245 / 393 * width, 627 / 857 * height);
+      text('r', 170 / 393 * width, 681 / 857 * height);
+      text('s', 82 / 393 * width, 697 / 857 * height);
+      pop();
     }
 
-    ball.radius = lerp(ball.radius, ball.targetRadius, 0.1); // smooth growth
-    
-    
-    fill(ball.bgColor);
-    ellipse(ball.x, ball.y, ball.radius * 2);
+    // tt_gridDotRadiusBase = factor / 25;
+    // tt_gridDotRadiusVariation = tt_gridDotRadiusBase / 3.5;
+    // tt_gridSpacing = tt_gridDotRadiusBase * 2 - tt_gridDotRadiusVariation;
+    // console.log(tt_gridDotRadiusBase, tt_gridDotRadiusVariation);
 
-    fill(ball.textColor);
-    textAlign(CENTER, CENTER);
-    textSize(ball.radius);
-    text(ball.letter, ball.x, ball.y);
-    
+    for (let pt of tt_grid) {
+      if (!pt.active && pt.activatedAt && pt.explosionOrigins.length > 0) {
+        let delays = pt.explosionOrigins.map(origin => {
+          let d = dist(pt.x, pt.y, origin.x, origin.y);
+          let maxD = 300;
+          let noiseOffset = noise(pt.x * 0.01, pt.y * 0.01) * 300;
+          let baseDelay = 1000;
+          let fadeDelay = map(d, 0, maxD, tt_revealDuration, 0);
+          return baseDelay + fadeDelay + noiseOffset;
+        });
 
-  }
+        let maxDelay = Math.max(...delays);
+        if (millis() - pt.activatedAt >= maxDelay) {
+          pt.active = true;
+          pt.activatedAt = null;
+          pt.explosionOrigins = [];
+        }
+      }
 
-  // Restart if all balls are lost
-  if (balls.length === 0) {
-    enterFunction1();
-    return;
+      fill(pt.active ? color(...tt_gridDotColor) : color(...tt_hiddenDotColor));
+      ellipse(pt.x, pt.y, pt.r * 2);
+    }
+
+    for (let p of tt_petals) {
+      p.update();
+      p.checkCollision();
+      p.display();
+    }
+    tt_petals = tt_petals.filter(p => p.life > 0);
+
+    tt_handleCircleHover();
+    tt_drawCircles();
+
+    if (millis() - tt_lastInteractionTime > tt_autoTriggerDelay) {
+      tt_triggerRandomUnexplodedCircle();
+      tt_lastInteractionTime = millis();
+    }
   }
 }
 
 function enterFunction2() {
   console.log("Function 2 triggered!");
   
-  pintuStarted = false;
+  mode1Started = false;
+  mode2Started = true;
+  mode3Started = false;
+  mode4Started = false;
   
   if (width > height) cellSize = width / 50;
   else cellSize = height / 25;
@@ -336,13 +357,19 @@ function enterFunction2() {
 
 function loopFunction2() {
   background('#0A2C20');
-  if(pintuStarted) updateCircles();
+  if(mode2Started) updateCircles();
   
   drawCircles();
 }
 
 function enterFunction3() {
   console.log("Function 3 triggered!");
+
+  mode1Started = false;
+  mode2Started = false;
+  mode3Started = true;
+  mode4Started = false;
+
   followers = [];
 
   angleMode(DEGREES);
@@ -355,23 +382,30 @@ function enterFunction3() {
 
 function loopFunction3() {
   background('#111009');
+  console.log(dragging);
   
-  
-
-  for (let f of followers) {
-    f.update();
-    f.display();
-  }
-  
-  for (let i = 0; i < followers.length; i++) {
-    for (let j = i + 1; j < followers.length; j++) {
-      separateFollowers(followers[i], followers[j]);
+  if (mode3Started) {
+    for (let f of followers) {
+      f.update();
+      f.display();
+    }
+    
+    for (let i = 0; i < followers.length; i++) {
+      for (let j = i + 1; j < followers.length; j++) {
+        separateFollowers(followers[i], followers[j]);
+      }
     }
   }
 }
 
 function enterFunction4() {
   console.log("Function 4 triggered!");
+
+  mode1Started = false;
+  mode2Started = false;
+  mode3Started = false;
+  mode4Started = true;
+
   particles = [];
   
   colorMode(RGB);
@@ -385,14 +419,153 @@ function enterFunction4() {
 }
 
 function loopFunction4() {
-  background('#FFFFF5');
-  for (let i = 0; i < particles.length; i++) {
-    particles[i].update();
-    particles[i].checkEdges();
-    particles[i].display();
+
+  if (mode4Started) {
+    background('#FFFFF5');
+    for (let i = 0; i < particles.length; i++) {
+      particles[i].update();
+      particles[i].checkEdges();
+      particles[i].display();
+    }
   }
 }
 
+// Mode 1 functions
+function tt_drawCircles() {
+  textAlign(CENTER, CENTER);
+  textFont('Arial');
+  textSize(16);
+
+  for (let i = 0; i < tt_circles.length; i++) {
+    let c = tt_circles[i];
+    if (!c.exploded) {
+      let bounce = sin((millis() - tt_startTime) * tt_bounceSpeed + i) * tt_bounceAmplitude;
+      let shadowWidth = map(bounce, -tt_bounceAmplitude, tt_bounceAmplitude, tt_shadowWidthMax, tt_shadowWidthMin);
+
+      // Draw shadow
+      fill(0, tt_shadowAlpha);
+      ellipse(c.x, c.y + tt_shadowYOffset, shadowWidth, tt_shadowHeight);
+
+      fill(...tt_circleFillColor);
+      ellipse(c.x, c.y + bounce, c.r * 2);
+
+      fill(...tt_textColor);
+      text(c.letter || "", c.x, c.y + bounce);
+    }
+  }
+}
+
+function tt_handleCircleHover() {
+  for (let c of tt_circles) {
+    if (!c.exploded && dist(mouseX, mouseY, c.x, c.y) < c.r) {
+      if (!c.hoveredAt || millis() - c.hoveredAt > tt_hoverCooldown) {
+        tt_explodeCircle(c);
+        c.hoveredAt = millis();
+      }
+    }
+  }
+}
+
+function tt_explodeCircle(c) {
+  c.exploded = true;
+  tt_explodedCount++;
+  tt_lastInteractionTime = millis();
+
+  let petalCount = floor(random(tt_explosionMinPetals, tt_explosionMaxPetals + 1));
+  for (let i = 0; i < petalCount; i++) {
+    let angle = (TWO_PI * i) / petalCount;
+    tt_petals.push(new Petal(c.x, c.y, angle));
+  }
+
+  if (tt_explodedCount > tt_spawnAfter) {
+    tt_addNewCircle(c.letter);
+  }
+}
+
+class Petal {
+  constructor(x, y, angle) {
+    this.origin = createVector(x, y);
+    this.pos = createVector(x, y);
+    this.vel = p5.Vector.fromAngle(angle).mult(random(tt_explosionSpeedMin, tt_explosionSpeedMax));
+    this.r = 10;
+    this.life = 19;
+    this.maxLife = 50;
+  }
+
+  update() {
+    this.pos.add(this.vel);
+    this.life--;
+  }
+
+  display() {
+    let alpha = map(this.life, 0, this.maxLife, 0, 255);
+    fill(255, alpha);
+    
+  }
+
+  checkCollision() {
+    for (let pt of tt_grid) {
+      let d = dist(this.pos.x, this.pos.y, pt.x, pt.y);
+      if (d < this.r + pt.r + tt_explosionCollisionRadius) {
+        if (pt.active) {
+          pt.active = false;
+        }
+        pt.activatedAt = millis();
+        pt.explosionOrigins.push(this.origin.copy());
+      }
+    }
+  }
+}
+
+function tt_triggerRandomUnexplodedCircle() {
+  let unclicked = tt_circles.filter(c => !c.exploded);
+  if (unclicked.length === 0) return;
+  tt_explodeCircle(random(unclicked));
+}
+
+function tt_addNewCircle(letter = "") {
+  let whitePoints = tt_grid.filter(pt => pt.active);
+  if (whitePoints.length === 0) return;
+
+  for (let i = 0; i < 50; i++) {
+    let centerX = width / 2;
+    let centerY = height / 2;
+    let x = centerX + random(-width * 0.35, width * 0.35);
+    let y = centerY + random(-height * 0.35, height * 0.35);
+
+    let tooClose = tt_circles.some(c => dist(c.x, c.y, x, y) < c.r * 2);
+    if (!tooClose) {
+      tt_circles.push({ x, y, r: tt_circleRadius, exploded: false, letter });
+      return;
+    }
+  }
+}
+
+function tt_reinitializeGridAndCircles() {
+  tt_grid = [];
+  tt_circles = [];
+  tt_petals = [];
+  tt_explodedCount = 0;
+  tt_lastInteractionTime = millis();
+
+  for (let y = tt_gridSpacing / 2; y < height; y += tt_gridSpacing) {
+    for (let x = tt_gridSpacing / 2; x < width; x += tt_gridSpacing) {
+      tt_grid.push({
+        x, y,
+        r: tt_gridDotRadiusBase + random(-tt_gridDotRadiusVariation, tt_gridDotRadiusVariation),
+        active: true,
+        activatedAt: null,
+        explosionOrigins: []
+      });
+    }
+  }
+
+  for (let i = 0; i < tt_wordToSpawn.length; i++) {
+    tt_addNewCircle(tt_wordToSpawn[i]);
+  }
+}
+
+// Mode 2 functions
 function initializeCircles() {
   let center = createVector(Math.floor(cols / 2), Math.floor(rows / 2));
   let gridPositions = [];
@@ -461,7 +634,9 @@ for (let i = 0; i < circles.length; i++) {
       circle.moveCount = (circle.moveCount || 0) + 1;
 
       // ✅ DUPLICATION LOGIC
-      if (circle.moveCount % 3 === 0) {
+      // if (circle.moveCount % 3 === 0) {
+      console.log(duplicate);
+      if (duplicate) {
         // Find a nearby free neighbor to spawn the clone
         let cloneNeighbors = directions
           .map(d => createVector(circle.gridX + d[0], circle.gridY + d[1]))
@@ -546,7 +721,12 @@ function separateFollowers(a, b) {
 
 function touchStarted(event) {
   phoneEye = true;
-  pintuStarted = true;
+  mode2Started = true;
+  duplicate = true;
+
+  setTimeout(() => {
+    duplicate = false;
+  }, 500);
 
   let touch = event.touches[0];
 
@@ -571,13 +751,20 @@ function touchStarted(event) {
   return false; // block default only if it's actually the canvas
 }
 
+// Mode 3 functions
 function mousePressed() {
-  startGame = true;
+  
+  
   dragging = true;
   lastMouse.x = mouseX;
   lastMouse.y = mouseY;
   
-  pintuStarted = true;
+  mode2Started = true;
+
+  duplicate = true;
+  setTimeout(() => {
+    duplicate = false;
+  }, 500);
 
   for (let f of followers) {
     f.settled = false;
@@ -627,8 +814,13 @@ function mousePressed() {
 //   rightPupilTarget = atan2(mouseY - rightY, mouseX - rightX);
 // }
 
+// function touchEnded() {
+//   duplicate = false;
+// }
+
 function mouseReleased() {
   dragging = false;
+  // duplicate = false;
 }
 
 class FunctionFollower {
@@ -990,6 +1182,7 @@ function lerpAngle(a, b, t) {
   return a + diff * t;
 }
 
+// Mode 4 functions
 class Particle {
   constructor(x, y, r, angle, speed, col, image = null) {
     this.pos = createVector(x, y);
@@ -1035,4 +1228,5 @@ class Particle {
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
+  tt_reinitializeGridAndCircles();
 }
