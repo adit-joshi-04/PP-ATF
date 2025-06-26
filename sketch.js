@@ -13,7 +13,7 @@ let tt_canvasHeight = 600;
 // let tt_gridDotRadiusVariation;
 
 let tt_gridSpacing = 35;
-let tt_gridDotRadiusBase = 35;
+let tt_gridDotRadiusBase = 40;
 let tt_gridDotRadiusVariation = 8;
 
 let tt_circleRadius = 18;
