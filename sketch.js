@@ -2,6 +2,7 @@ let factor;
 
 let currentMode = null;
 let mode1Started = false;
+let findersFirst = true;
 let pintu;
 
 let tt_canvasWidth = 800;
@@ -11,9 +12,9 @@ let tt_canvasHeight = 600;
 // let tt_gridDotRadiusBase;
 // let tt_gridDotRadiusVariation;
 
-let tt_gridSpacing = 35;
-let tt_gridDotRadiusBase = 35;
-let tt_gridDotRadiusVariation = 10;
+let tt_gridSpacing = 20;
+let tt_gridDotRadiusBase = 20;
+let tt_gridDotRadiusVariation = 8;
 
 let tt_circleRadius = 18;
 let tt_wordToSpawn = "PINGPONG";
@@ -32,7 +33,7 @@ let tt_explosionMinPetals = 6;
 let tt_explosionMaxPetals = 9;
 let tt_explosionSpeedMin = 14;
 let tt_explosionSpeedMax = 20;
-let tt_explosionCollisionRadius = 40;
+let tt_explosionCollisionRadius;
 
 let tt_hoverCooldown = 300;
 
@@ -273,19 +274,19 @@ function loopFunction1() {
       textAlign(LEFT, TOP);
       textSize(125);
       textFont('argent-pixel-cf');
-      text('f', 63 / 393 * width, 39 / 857 * height);
+      text('f', 78 / 393 * width, 22 / 857 * height);
       text('i', 142 / 393 * width, 39 / 857 * height);
       text('n', 197 / 393 * width, 58 / 857 * height);
       text('d', 235 / 393 * width, 165 / 857 * height);
-      text('e', 207 / 393 * width, 253 / 857 * height);
-      text('r', 130 / 393 * width, 272 / 857 * height);
-      text('s', 63 / 393 * width, 339 / 857 * height);
-      text('e', 82 / 393 * width, 434 / 857 * height);
-      text('e', 162 / 393 * width, 482 / 857 * height);
+      text('e', 193 / 393 * width, 253 / 857 * height);
+      text('r', 127 / 393 * width, 282 / 857 * height);
+      text('s', 63 / 393 * width, 355 / 857 * height);
+      text('e', 118 / 393 * width, 434 / 857 * height);
+      text('e', 182 / 393 * width, 482 / 857 * height);
       text('k', 249 / 393 * width, 520 / 857 * height);
-      text('e', 245 / 393 * width, 627 / 857 * height);
-      text('r', 170 / 393 * width, 681 / 857 * height);
-      text('s', 82 / 393 * width, 697 / 857 * height);
+      text('e', 235 / 393 * width, 627 / 857 * height);
+      text('r', 175 / 393 * width, 681 / 857 * height);
+      text('s', 102 / 393 * width, 697 / 857 * height);
       pop();
     }
 
@@ -293,6 +294,9 @@ function loopFunction1() {
     // tt_gridDotRadiusVariation = tt_gridDotRadiusBase / 3.5;
     // tt_gridSpacing = tt_gridDotRadiusBase * 2 - tt_gridDotRadiusVariation;
     // console.log(tt_gridDotRadiusBase, tt_gridDotRadiusVariation);
+
+    if (width > height) tt_explosionCollisionRadius = 40;
+    else tt_explosionCollisionRadius = 20;
 
     for (let pt of tt_grid) {
       if (!pt.active && pt.activatedAt && pt.explosionOrigins.length > 0) {
@@ -338,25 +342,33 @@ function enterFunction2() {
   console.log("Function 2 triggered!");
   
   mode1Started = false;
-  mode2Started = true;
+  mode2Started = false;
   mode3Started = false;
   mode4Started = false;
   
+  angleMode(RADIANS);
+
   if (width > height) cellSize = width / 50;
   else cellSize = height / 25;
   
   
-  cols = Math.floor(width / cellSize);
-  rows = Math.floor(height / cellSize);
+  cols = Math.ceil(width / cellSize);
+  rows = Math.ceil(height / cellSize);
+
+  // Calculate offset to center the grid
+  xOffset = (width - cols * cellSize) / 2;
+  yOffset = (height - rows * cellSize) / 2;
 
   circleRadius = cellSize / 2;
-  console.log(circleRadius, cols, rows);
+  //console.log(circleRadius, cols, rows);
   circles = [];
   initializeCircles();
 }
 
 function loopFunction2() {
   background('#0A2C20');
+
+
   if(mode2Started) updateCircles();
   
   drawCircles();
@@ -433,7 +445,8 @@ function loopFunction4() {
 // Mode 1 functions
 function tt_drawCircles() {
   textAlign(CENTER, CENTER);
-  textFont('Arial');
+  textFont('degular-mono');
+  textStyle(BOLD);
   textSize(16);
 
   for (let i = 0; i < tt_circles.length; i++) {
@@ -451,6 +464,7 @@ function tt_drawCircles() {
 
       fill(...tt_textColor);
       text(c.letter || "", c.x, c.y + bounce);
+
     }
   }
 }
@@ -486,7 +500,18 @@ class Petal {
   constructor(x, y, angle) {
     this.origin = createVector(x, y);
     this.pos = createVector(x, y);
-    this.vel = p5.Vector.fromAngle(angle).mult(random(tt_explosionSpeedMin, tt_explosionSpeedMax));
+
+    // Spread adjustment based on canvas aspect ratio
+    let spreadFactor = 1;
+    if (height > width) {
+      spreadFactor = 0.6; // Reduce speed when vertical layout
+    }
+
+    // Apply directional speed with spread control
+    this.vel = p5.Vector.fromAngle(angle).mult(
+      random(tt_explosionSpeedMin, tt_explosionSpeedMax) * spreadFactor
+    );
+
     this.r = 10;
     this.life = 19;
     this.maxLife = 50;
@@ -500,7 +525,6 @@ class Petal {
   display() {
     let alpha = map(this.life, 0, this.maxLife, 0, 255);
     fill(255, alpha);
-    
   }
 
   checkCollision() {
@@ -533,7 +557,63 @@ function tt_addNewCircle(letter = "") {
     let x = centerX + random(-width * 0.35, width * 0.35);
     let y = centerY + random(-height * 0.35, height * 0.35);
 
-    let tooClose = tt_circles.some(c => dist(c.x, c.y, x, y) < c.r * 2);
+    if (findersFirst) {
+      if (width > height) {
+        if (i === 0) {
+          x = 174/1761 * width;
+          y = 358/1173 * height;
+        } else if (i === 1) {
+          x = 604/1761 * width;
+          y = 289/1173 * height;
+        } else if (i === 2) {
+          x = 959/1761 * width;
+          y = 159/1173 * height;
+        } else if (i === 3) {
+          x = 1322/1761 * width;
+          y = 329/1173 * height;
+        } else if (i === 4) {
+          x = 383/1761 * width;
+          y = 776/1173 * height;
+        } else if (i === 5) {
+          x = 881/1761 * width;
+          y = 604/1173 * height;
+        } else if (i === 6) {
+          x = 1095/1761 * width;
+          y = 929/1173 * height;
+        } else if (i === 7) {
+          x = 1501/1761 * width;
+          y = 723/1173 * height;
+        }
+      } else {
+        if (i === 0) {
+          x = 78/393 * width;
+          y = 143/857 * height;
+        } else if (i === 1) {
+          x = 245/393 * width;
+          y = 170/857 * height;
+        } else if (i === 2) {
+          x = 188/393 * width;
+          y = 247/857 * height;
+        } else if (i === 3) {
+          x = 308/393 * width;
+          y = 317/857 * height;
+        } else if (i === 4) {
+          x = 55/393 * width;
+          y = 383/857 * height;
+        } else if (i === 5) {
+          x = 207/393 * width;
+          y = 459/857 * height;
+        } else if (i === 6) {
+          x = 159/393 * width;
+          y = 625/857 * height;
+        } else if (i === 7) {
+          x = 319/393 * width;
+          y = 587/857 * height;
+        }
+      }
+    }
+
+    let tooClose = tt_circles.some(c => dist(c.x, c.y, x, y) < (c.r * 2) + 10);
     if (!tooClose) {
       tt_circles.push({ x, y, r: tt_circleRadius, exploded: false, letter });
       return;
@@ -582,8 +662,8 @@ function initializeCircles() {
 
   for (let i = 0; i < numCircles; i++) {
     let pos = gridPositions[i];
-    let x = pos.x * cellSize + cellSize / 2;
-    let y = pos.y * cellSize + cellSize / 2;
+    let x = pos.x * cellSize + cellSize / 2 + xOffset;
+    let y = pos.y * cellSize + cellSize / 2 + yOffset;
     circles.push({
       x: x,
       y: y,
@@ -592,7 +672,7 @@ function initializeCircles() {
       targetX: x,
       targetY: y,
       startTime: millis(),
-      moveCount: 0,  // Track how many moves this circle has made
+      moveCount: 0,
       history: [createVector(pos.x, pos.y)]
     });
   }
@@ -600,82 +680,78 @@ function initializeCircles() {
 
 function updateCircles() {
   let now = millis();
-
   let newCircles = [];
 
-for (let i = 0; i < circles.length; i++) {
-  let circle = circles[i];
+  for (let i = 0; i < circles.length; i++) {
+    let circle = circles[i];
 
-  if (now - circle.startTime > easingDuration) {
-    let neighbors = [];
+    if (now - circle.startTime > easingDuration) {
+      let neighbors = [];
 
-    for (let dir of directions) {
-      let newX = circle.gridX + dir[0];
-      let newY = circle.gridY + dir[1];
+      for (let dir of directions) {
+        let newX = circle.gridX + dir[0];
+        let newY = circle.gridY + dir[1];
 
-      if (newX >= 0 && newX < cols && newY >= 0 && newY < rows) {
-        neighbors.push(createVector(newX, newY));
+        if (newX >= 0 && newX < cols && newY >= 0 && newY < rows) {
+          neighbors.push(createVector(newX, newY));
+        }
       }
-    }
 
-    neighbors = neighbors.filter(pos =>
-      !circles.some(c => c.gridX === pos.x && c.gridY === pos.y)
-    );
+      neighbors = neighbors.filter(pos =>
+        !circles.some(c => c.gridX === pos.x && c.gridY === pos.y)
+      );
 
-    if (neighbors.length > 0) {
-      let newPos = random(neighbors);
+      if (neighbors.length > 0) {
+        let newPos = random(neighbors);
 
-      circle.targetX = newPos.x * cellSize + cellSize / 2;
-      circle.targetY = newPos.y * cellSize + cellSize / 2;
-      circle.history.push(createVector(circle.gridX, circle.gridY));
-      circle.gridX = newPos.x;
-      circle.gridY = newPos.y;
-      circle.startTime = millis();
-      circle.moveCount = (circle.moveCount || 0) + 1;
+        circle.targetX = newPos.x * cellSize + cellSize / 2 + xOffset;
+        circle.targetY = newPos.y * cellSize + cellSize / 2 + yOffset;
+        circle.history.push(createVector(circle.gridX, circle.gridY));
+        circle.gridX = newPos.x;
+        circle.gridY = newPos.y;
+        circle.startTime = millis();
+        circle.moveCount = (circle.moveCount || 0) + 1;
 
-      // ✅ DUPLICATION LOGIC
-      // if (circle.moveCount % 3 === 0) {
-      console.log(duplicate);
-      if (duplicate) {
-        // Find a nearby free neighbor to spawn the clone
-        let cloneNeighbors = directions
-          .map(d => createVector(circle.gridX + d[0], circle.gridY + d[1]))
-          .filter(pos =>
-            pos.x >= 0 && pos.x < cols && pos.y >= 0 && pos.y < rows &&
-            !circles.some(c => c.gridX === pos.x && c.gridY === pos.y) &&
-            !newCircles.some(c => c.gridX === pos.x && c.gridY === pos.y)
-          );
+        // ✅ DUPLICATION LOGIC
+        if (duplicate) {
+          let cloneNeighbors = directions
+            .map(d => createVector(circle.gridX + d[0], circle.gridY + d[1]))
+            .filter(pos =>
+              pos.x >= 0 && pos.x < cols && pos.y >= 0 && pos.y < rows &&
+              !circles.some(c => c.gridX === pos.x && c.gridY === pos.y) &&
+              !newCircles.some(c => c.gridX === pos.x && c.gridY === pos.y)
+            );
 
-        if (cloneNeighbors.length > 0) {
-          let clonePos = random(cloneNeighbors);
-          let cx = clonePos.x * cellSize + cellSize / 2;
-          let cy = clonePos.y * cellSize + cellSize / 2;
+          if (cloneNeighbors.length > 0) {
+            let clonePos = random(cloneNeighbors);
+            let cx = clonePos.x * cellSize + cellSize / 2 + xOffset;
+            let cy = clonePos.y * cellSize + cellSize / 2 + yOffset;
 
-          // Start at parent's position, animate out
-          newCircles.push({
-            x: circle.x,
-            y: circle.y,
-            gridX: clonePos.x,
-            gridY: clonePos.y,
-            targetX: cx,
-            targetY: cy,
-            startTime: millis(),
-            history: [createVector(clonePos.x, clonePos.y)],
-            moveCount: 0
-          });
+            newCircles.push({
+              x: circle.x,
+              y: circle.y,
+              gridX: clonePos.x,
+              gridY: clonePos.y,
+              targetX: cx,
+              targetY: cy,
+              startTime: millis(),
+              history: [createVector(clonePos.x, clonePos.y)],
+              moveCount: 0
+            });
+          }
         }
       }
     }
+
+    let elapsed = min((now - circle.startTime) / easingDuration, 1);
+    let ease = quartInOut(elapsed);
+    circle.x = lerp(circle.x, circle.targetX, ease);
+    circle.y = lerp(circle.y, circle.targetY, ease);
   }
 
-  let elapsed = min((now - circle.startTime) / easingDuration, 1);
-  let ease = quartInOut(elapsed);
-  circle.x = lerp(circle.x, circle.targetX, ease);
-  circle.y = lerp(circle.y, circle.targetY, ease);
-}
-if (circles.length + newCircles.length > maxPintu) return;
-// Append the new clones to the main array
-circles = circles.concat(newCircles);
+  if (circles.length + newCircles.length > maxPintu) return;
+
+  circles = circles.concat(newCircles);
 }
 
 function drawCircles() {
@@ -686,13 +762,33 @@ function drawCircles() {
 
   for (let circle of circles) {
     for (let pos of circle.history) {
-      let hx = pos.x * cellSize + cellSize / 2;
-      let hy = pos.y * cellSize + cellSize / 2;
-      //image(pintu, hx, hy, circleRadius * 2, circleRadius * 2);
+      let hx = pos.x * cellSize + cellSize / 2 + xOffset;
+      let hy = pos.y * cellSize + cellSize / 2 + yOffset;
+      // image(pintu, hx, hy, circleRadius * 2, circleRadius * 2);
     }
 
-    image(pintu, circle.x, circle.y, circleRadius * 2, circleRadius * 2);
+    if (!mode2Started) {
+      let time = millis();
+      let interval = 3000;     // every 3 seconds
+      let wiggleDuration = 500; // wiggle lasts for 300 ms
+
+      let inWiggleWindow = (time % interval) < wiggleDuration;
+
+      let wiggleX = 0;
+      if (inWiggleWindow) {
+        // Quick oscillation within the wiggle duration
+        let t = (time % interval) / wiggleDuration; // normalized [0,1] over 300ms
+        wiggleX = sin(t * TWO_PI * 4) * 5; // fast wiggle (4 cycles, 5px range)
+      }
+
+      let size = circleRadius * 2;
+      image(pintu, circle.x + wiggleX, circle.y, size, size);
+    }
+    else {
+      image(pintu, circle.x, circle.y, circleRadius * 2, circleRadius * 2);
+    }
   }
+
   pop();
 }
 
@@ -748,7 +844,7 @@ function touchStarted(event) {
     mouseReleased();
   }, 4000);
 
-  return false; // block default only if it's actually the canvas
+  //return false; // block default only if it's actually the canvas
 }
 
 // Mode 3 functions
@@ -1187,7 +1283,7 @@ class Particle {
   constructor(x, y, r, angle, speed, col, image = null) {
     this.pos = createVector(x, y);
     this.r = r;
-    this.vel = p5.Vector.fromAngle(angle || random(TWO_PI)).mult(speed || random(1, 2));
+    this.vel = p5.Vector.fromAngle(angle || random(TWO_PI)).mult(speed || random(1, 2.5));
     this.mass = this.r * 0.1;
     this.col = col; // If null, use image
     this.image = image;
@@ -1201,6 +1297,10 @@ class Particle {
     push();
     if (this.image && !this.col) {
       blendMode(BLEND); // default blend for images
+      // push();
+      // fill('blue');
+      // ellipse(this.pos.x, this.pos.y, this.r * 4, this.r * 4)
+      // pop();
       image(this.image, this.pos.x, this.pos.y, this.r * 2, this.r * 2);
     } else {
       blendMode(MULTIPLY); // multiply blend for colored particles
@@ -1222,7 +1322,8 @@ class Particle {
   }
 
   isClicked(mx, my) {
-    return dist(mx, my, this.pos.x, this.pos.y) < this.r;
+    let clickRadius = this.image && !this.col ? this.r * 2 : this.r;
+    return dist(mx, my, this.pos.x, this.pos.y) < clickRadius;
   }
 }
 
