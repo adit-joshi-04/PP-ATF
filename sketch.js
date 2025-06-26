@@ -170,6 +170,7 @@ function setMode(modeName) {
 
 function enterFunction1() {
   console.log("Function 1 triggered!");
+  
   // moveX = 0;
   mode1Started = true;
   mode2Started = false;
@@ -179,6 +180,7 @@ function enterFunction1() {
   angleMode(RADIANS);
 
   tt_circles = [];
+  tt_grid = [];
 
   // tt_gridDotRadiusBase = factor / 30;
   // tt_gridDotRadiusVariation = 10;
@@ -237,6 +239,7 @@ function enterFunction1() {
       }
     }
   }
+  console.log("Grid size after reset:", tt_grid.length);
 }
 
 function loopFunction1() {
