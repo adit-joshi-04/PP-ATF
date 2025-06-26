@@ -650,7 +650,7 @@ function tt_reinitializeGridAndCircles() {
 
 // Mode 2 functions
 function initializeCircles() {
-  let center = createVector(Math.floor(cols / 2), Math.floor(rows / 2));
+  let center = createVector(Math.ceil(cols / 2), Math.ceil(rows / 2));
   let gridPositions = [];
 
   for (let x = 0; x < cols; x++) {
@@ -665,8 +665,8 @@ function initializeCircles() {
 
   for (let i = 0; i < numCircles; i++) {
     let pos = gridPositions[i];
-    let x = pos.x * cellSize + cellSize / 2 + xOffset;
-    let y = pos.y * cellSize + cellSize / 2 + yOffset;
+    let x = pos.x * cellSize + cellSize / 2 - cellSize;
+    let y = pos.y * cellSize + cellSize / 2 - cellSize;
     circles.push({
       x: x,
       y: y,
