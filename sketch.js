@@ -1286,7 +1286,7 @@ class Particle {
   constructor(x, y, r, angle, speed, col, image = null) {
     this.pos = createVector(x, y);
     this.r = r;
-    this.vel = p5.Vector.fromAngle(angle || random(TWO_PI)).mult(speed || random(1, 2.5));
+    this.vel = p5.Vector.fromAngle(angle || random(TWO_PI)).mult(speed || random(1, 2));
     this.mass = this.r * 0.1;
     this.col = col; // If null, use image
     this.image = image;
