@@ -8,6 +8,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://use.typekit.net/oac4ciw.css">
     <title>Ping Pong ATF</title>
+    <style>
+      .arrow-dwn {
+        
+        stroke: black;
+      }
+    </style>
 
   </head>
   <body>
@@ -27,7 +33,20 @@
         <button id="third"><img src="eye.png" alt="eye"></button>
         <button id="fourth"><img src="beach-icon.png" alt="beachball"></button>
       </div>
+      <svg style="scale: 1;
+        position: absolute;
+        left: 50%;
+        top: 90%;
+        transform: translateX(-50%);" width="48" height="48" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path class="arrow-dwn" d="M6 9l6 6 6-6"  stroke-width="1" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
     </main>
+    <script>
+      document.getElementById('default').addEventListener('click', () => {document.querySelector('.arrow-dwn').style.stroke = "black"});
+      document.getElementById('secondd').addEventListener('click', () => {document.querySelector('.arrow-dwn').style.stroke = "white"});
+      document.getElementById('third').addEventListener('click', () => {document.querySelector('.arrow-dwn').style.stroke = "white"});
+      document.getElementById('fourth').addEventListener('click', () => {document.querySelector('.arrow-dwn').style.stroke = "black"});
+    </script>
     <script src="sketch.js"></script>
   </body>
 </html>

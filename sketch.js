@@ -37,7 +37,7 @@ let tt_explosionCollisionRadius;
 
 let tt_hoverCooldown = 300;
 
-let tt_gridDotColor = [255, 204, 0];
+let tt_gridDotColor = [255, 214, 13];
 let tt_hiddenDotColor = [0, 0, 0, 0];
 let tt_circleFillColor = [255];
 let tt_textColor = [0];
